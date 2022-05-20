@@ -1,0 +1,46 @@
+{
+	"roommates": [
+		{
+			"id": "4318b7",
+			"nombre": "Torvald Vollan",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "torvald.vollan@example.com"
+		},
+		{
+			"id": "c47beb",
+			"nombre": "Oona Juntunen",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "oona.juntunen@example.com"
+		},
+		{
+			"id": "558195",
+			"nombre": "Florent Louis",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "florent.louis@example.com"
+		},
+		{
+			"id": "da934d",
+			"nombre": "Viktoria Steinkamp",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "viktoria.steinkamp@example.com"
+		},
+		{
+			"id": "b7c1bf",
+			"nombre": "Alwin Träger",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "alwin.trager@example.com"
+		},
+		{
+			"id": "5a8153",
+			"nombre": "Ilona Hietala",
+			"debe": 0,
+			"recibe": 0,
+			"correo": "ilona.hietala@example.com"
+		}
+	]
+}
