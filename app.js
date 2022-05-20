@@ -1,7 +1,7 @@
 const url = require('url')
 const http = require('http')
 const fs = require('fs')
-const { getData, nuevoGasto } = require('./getdata')
+const { getData, nuevoGasto, recalculo } = require('./getdata')
 const { asyncReadFile, asyncWriteFile } = require('./asyncFunctions')
 
 const port = 3000
@@ -43,9 +43,7 @@ http
 				.then((user) => {
 					roomMate.push(user)
 					fs.writeFileSync('roommates.json', JSON.stringify(roomMates))
-					const recalcularDeuda = () =>{
-						
-					}
+					recalculo()
 					res.writeHead(200)
 					res.end(JSON.stringify(user))
 				})
@@ -92,18 +90,26 @@ http
 			})
 			req.on('end', () => {
 				gastosJSON.gastos = gasto.map((g) => {
-					if (g.id == body.id) {
+					if (g.id === body.id) {
 						return body
 					}
 					return g
 				})
-				fs.writeFileSync('gastos.json', JSON.stringify(gastosJSON))
+				asyncWriteFile('gastos.json', JSON.stringify(gastosJSON))
+					.then(() => {
+						res.end()
+					})
+					.catch((err) => console.log(err)) //error code
 				res.end()
 			})
 		}
 		if (urlParse.pathname.includes('/gasto') && req.method == 'DELETE') {
 			gastosJSON.gastos = gasto.filter((g) => g.id !== id)
-			fs.writeFileSync('gastos.json', JSON.stringify(gastosJSON))
+			asyncWriteFile('gastos.json', JSON.stringify(gastosJSON))
+				.then(() => {
+					res.end()
+				})
+				.catch((err) => console.log(err)) //error code
 			res.end()
 		}
 	})

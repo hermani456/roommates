@@ -13,6 +13,7 @@ const getData = async () => {
 			nombre: `${first} ${last}`,
 			debe: 0,
 			recibe: 0,
+			total: 0,
 			correo: data.results[0].email,
 		}
 		return user
@@ -21,7 +22,7 @@ const getData = async () => {
 	}
 }
 
-const nuevoGasto = async(body) => {
+const nuevoGasto = async (body) => {
 	try {
 		const nuevoGasto = {
 			id: uuidv4().slice(30),
@@ -41,4 +42,27 @@ const pushData = (obj, array, path, jsonFile, res) => {
 	res.end()
 }
 
-module.exports = { getData, nuevoGasto, pushData }
+const recalculo = () => {
+	const roommates = JSON.parse(fs.readFileSync('roommates.json', 'utf8'))
+	roommates = roommates.map((r) => {
+		r.debe = 0
+		r.recibe = 0
+		r.total = 0
+		return r
+	})
+	gasto.forEach((g) => {
+		roommates = roommates.map((r) => {
+			const dividendo = Number((g.monto / roommates.length).toFixed(2))
+			if (g.roommate == r.nombre) {
+				r.recibe += dividendo * (roommates.length - 1)
+			} else {
+				r.debe -= dividendo
+			}
+			r.total = r.recibe - r.debe
+			return r
+		})
+		fs.writeFileSync('roommates.json', JSON.stringify(roommates))
+	})
+}
+
+module.exports = { getData, nuevoGasto, recalculo }
