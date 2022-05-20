@@ -1,7 +1,13 @@
 const url = require('url')
 const http = require('http')
 const fs = require('fs')
-const { getData, nuevoGasto, getId, calcular } = require('./getdata')
+const {
+	getData,
+	nuevoGasto,
+	getId,
+	calcular,
+	jsonHandler,
+} = require('./getdata')
 const { asyncReadFile, asyncWriteFile } = require('./asyncFunctions')
 
 const port = 3000
@@ -9,10 +15,6 @@ const port = 3000
 http
 	.createServer(async (req, res) => {
 		const urlParse = url.parse(req.url, true)
-		const gastosJSON = JSON.parse(fs.readFileSync('gastos.json', 'utf8'))
-		let gasto = gastosJSON.gastos
-		const roomMatesJson = JSON.parse(fs.readFileSync('roommates.json', 'utf8'))
-		let roomMate = roomMatesJson.roommates
 		if (urlParse.pathname === '/') {
 			res.writeHead(200, { 'Content-Type': 'text/html' })
 			asyncReadFile('index.html')
@@ -36,8 +38,10 @@ http
 				})
 		}
 		if (urlParse.pathname.includes('/roommate') && req.method == 'POST') {
-			// const roomMates = JSON.parse(fs.readFileSync('roommates.json', 'utf8'))
-			// const roomMate = roomMates.roommates
+			const roomMatesJson = jsonHandler('roommates.json')
+			let roomMate = roomMatesJson.roommates
+			const gastosJSON = jsonHandler('gastos.json')
+			let gasto = gastosJSON.gastos
 			getData().then((user) => {
 				roomMate.push(user)
 				calcular(gasto, roomMate)
@@ -45,10 +49,10 @@ http
 				res.writeHead(200)
 				res.end(JSON.stringify(user))
 			})
-			// .catch((error) => {
-			// 	res.writeHead(500)
-			// 	res.end(error)
-			// })
+			.catch((error) => {
+				res.writeHead(500)
+				res.end(error)
+			})
 		}
 		if (urlParse.pathname.includes('/gastos') && req.method == 'GET') {
 			res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -62,26 +66,35 @@ http
 				})
 		}
 		if (urlParse.pathname.includes('/gasto') && req.method == 'POST') {
+			const roomMatesJson = jsonHandler('roommates.json')
+			let roomMate = roomMatesJson.roommates
+			const gastosJSON = jsonHandler('gastos.json')
+			let gasto = gastosJSON.gastos
 			let body
 			req.on('data', (payload) => {
 				body = JSON.parse(payload)
 			})
 			req.on('end', () => {
-				nuevoGasto(body).then((nuevoGasto) => {
-					gasto.push(nuevoGasto)
-					calcular(gasto, roomMate)
-					fs.writeFileSync('gastos.json', JSON.stringify(gastosJSON))
-					fs.writeFileSync('roommates.json', JSON.stringify(roomMatesJson))
-					res.writeHead(200)
-					res.end()
-				})
-				// .catch((error) => {
-				// 	res.writeHead(500)
-				// 	res.end(error)
-				// })
+				nuevoGasto(body)
+					.then((nuevoGasto) => {
+						gasto.push(nuevoGasto)
+						calcular(gasto, roomMate)
+						fs.writeFileSync('gastos.json', JSON.stringify(gastosJSON))
+						fs.writeFileSync('roommates.json', JSON.stringify(roomMatesJson))
+						res.writeHead(200)
+						res.end()
+					})
+					.catch((error) => {
+						res.writeHead(500)
+						res.end(error)
+					})
 			})
 		}
 		if (urlParse.pathname.includes('/gasto') && req.method == 'PUT') {
+			const roomMatesJson = jsonHandler('roommates.json')
+			let roomMate = roomMatesJson.roommates
+			const gastosJSON = jsonHandler('gastos.json')
+			let gasto = gastosJSON.gastos
 			const id = getId(urlParse)
 			let body
 			req.on('data', (payload) => {
@@ -107,6 +120,8 @@ http
 			})
 		}
 		if (urlParse.pathname.includes('/gasto') && req.method == 'DELETE') {
+			const gastosJSON = jsonHandler('gastos.json')
+			let gasto = gastosJSON.gastos
 			const id = getId(urlParse)
 			gastosJSON.gastos = gasto.filter((g) => g.id !== id)
 			asyncWriteFile('gastos.json', JSON.stringify(gastosJSON))

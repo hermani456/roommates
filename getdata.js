@@ -43,10 +43,10 @@ const getId = (urlParse) => {
 
 const calcular = (gasto, roomMate) => {
 	roomMate = roomMate.map((r) => {
-				r.debe = 0
-				r.recibe = 0
-				r.total = 0
-				return r
+		r.debe = 0
+		r.recibe = 0
+		r.total = 0
+		return r
 	})
 	gasto.forEach((g) => {
 		roomMate = roomMate.map((r) => {
@@ -62,4 +62,9 @@ const calcular = (gasto, roomMate) => {
 	})
 }
 
-module.exports = { getData, nuevoGasto, getId, calcular }
+const jsonHandler = (jsonFile) => {
+	const json = JSON.parse(fs.readFileSync(jsonFile, 'utf8'))
+	return json
+}
+
+module.exports = { getData, nuevoGasto, getId, calcular, jsonHandler }
