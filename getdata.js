@@ -36,33 +36,30 @@ const nuevoGasto = async (body) => {
 	}
 }
 
-const pushData = (obj, array, path, jsonFile, res) => {
-	array.push(obj)
-	fs.writeFileSync(path, JSON.stringify(jsonFile))
-	res.end()
+const getId = (urlParse) => {
+	const { id } = urlParse.query
+	return id
 }
 
-const recalculo = () => {
-	const roommates = JSON.parse(fs.readFileSync('roommates.json', 'utf8'))
-	roommates = roommates.map((r) => {
-		r.debe = 0
-		r.recibe = 0
-		r.total = 0
-		return r
+const calcular = (gasto, roomMate) => {
+	roomMate = roomMate.map((r) => {
+				r.debe = 0
+				r.recibe = 0
+				r.total = 0
+				return r
 	})
 	gasto.forEach((g) => {
-		roommates = roommates.map((r) => {
-			const dividendo = Number((g.monto / roommates.length).toFixed(2))
+		roomMate = roomMate.map((r) => {
+			const dividendo = Number((g.monto / roomMate.length).toFixed(2))
 			if (g.roommate == r.nombre) {
-				r.recibe += dividendo * (roommates.length - 1)
+				r.recibe = r.recibe - dividendo * (roomMate.length - 1)
 			} else {
-				r.debe -= dividendo
+				r.debe = r.debe - dividendo
 			}
 			r.total = r.recibe - r.debe
 			return r
 		})
-		fs.writeFileSync('roommates.json', JSON.stringify(roommates))
 	})
 }
 
-module.exports = { getData, nuevoGasto, recalculo }
+module.exports = { getData, nuevoGasto, getId, calcular }
