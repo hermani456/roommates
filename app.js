@@ -1,6 +1,7 @@
 const url = require('url')
 const http = require('http')
 const fs = require('fs')
+require('dotenv').config()
 const {
 	getData,
 	nuevoGasto,
@@ -9,8 +10,9 @@ const {
 	jsonHandler,
 } = require('./getdata')
 const { asyncReadFile, asyncWriteFile } = require('./asyncFunctions')
+const mailer = require('./mailer')
 
-const port = 3000
+const port = process.env.PORT
 
 http
 	.createServer(async (req, res) => {
@@ -33,7 +35,7 @@ http
 					res.end(data)
 				})
 				.catch((err) => {
-					res.writeHead(404)
+					res.writeHead(500)
 					res.end(`Error: ${err}`)
 				})
 		}
@@ -42,17 +44,18 @@ http
 			let roomMate = roomMatesJson.roommates
 			const gastosJSON = jsonHandler('gastos.json')
 			let gasto = gastosJSON.gastos
-			getData().then((user) => {
-				roomMate.push(user)
-				calcular(gasto, roomMate)
-				fs.writeFileSync('roommates.json', JSON.stringify(roomMatesJson))
-				res.writeHead(200)
-				res.end(JSON.stringify(user))
-			})
-			.catch((error) => {
-				res.writeHead(500)
-				res.end(error)
-			})
+			getData()
+				.then((user) => {
+					roomMate.push(user)
+					calcular(gasto, roomMate)
+					fs.writeFileSync('roommates.json', JSON.stringify(roomMatesJson))
+					res.writeHead(200)
+					res.end(JSON.stringify(user))
+				})
+				.catch((error) => {
+					res.writeHead(500)
+					res.end(error)
+				})
 		}
 		if (urlParse.pathname.includes('/gastos') && req.method == 'GET') {
 			res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -61,7 +64,7 @@ http
 					res.end(data)
 				})
 				.catch((err) => {
-					res.writeHead(404)
+					res.writeHead(500)
 					res.end(`Error: ${err}`)
 				})
 		}
@@ -76,9 +79,12 @@ http
 			})
 			req.on('end', () => {
 				nuevoGasto(body)
-					.then((nuevoGasto) => {
+					.then(async(nuevoGasto) => {
 						gasto.push(nuevoGasto)
+						const roomMateEmail = ["palomaconbotas@yahoo.com", ...roomMate.map(mate => mate.correo)].join()
 						calcular(gasto, roomMate)
+						await mailer(roomMateEmail.split(','), 'nuevo gasto', 'nuevo gasto').then((data) => console.log(data))
+						.catch((err) => console.log(err))
 						fs.writeFileSync('gastos.json', JSON.stringify(gastosJSON))
 						fs.writeFileSync('roommates.json', JSON.stringify(roomMatesJson))
 						res.writeHead(200)
@@ -115,7 +121,10 @@ http
 					.then(() => {
 						res.end()
 					})
-					.catch((err) => console.log(err)) //error code
+					.catch((error) => {
+						res.writeHead(500)
+						res.end(error)
+					})
 				res.end()
 			})
 		}
@@ -128,10 +137,13 @@ http
 				.then(() => {
 					res.end()
 				})
-				.catch((err) => console.log(err)) //error code
+				.catch((error) => {
+					res.writeHead(500)
+					res.end(error)
+				})
 			res.end()
 		}
 	})
 	.listen(port, () => {
-		console.log(`servidor corriendo en: http://localhost:${port}`)
+		console.log(`Server running at http://localhost:${port}`)
 	})
